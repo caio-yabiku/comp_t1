@@ -12,7 +12,8 @@ public class NumberExpr extends Expr {
         return value;
     }
 
-    public void genC() {
-        System.out.print(value);
+    @Override
+    public void genC(PW pw) {
+        pw.out.print(value);
     }
 }

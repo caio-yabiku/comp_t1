@@ -11,9 +11,9 @@ public class AssignStat extends Stat {
     }
 
     @Override
-    public void genC() {
-        System.out.print(v.getName() + " = ");
-        expr.genC();
-        System.out.println(";");
+    public void genC(PW pw) {
+        pw.print(v.getName() + " = ");
+        expr.genC(pw);
+        pw.out.println(";");
     }
 }

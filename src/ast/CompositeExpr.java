@@ -13,11 +13,11 @@ public class CompositeExpr extends Expr {
         this.op = op;
     }
 
-    public void genC() {
-        System.out.print("(");
-        left.genC();
-        System.out.print(" " + op.toString() + " ");
-        right.genC();
-        System.out.print(")");
+    public void genC(PW pw) {
+        pw.out.print("(");
+        left.genC(pw);
+        pw.out.print(" " + op.toString() + " ");
+        right.genC(pw);
+        pw.out.print(")");
     }
 }

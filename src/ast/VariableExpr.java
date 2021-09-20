@@ -8,7 +8,7 @@ public class VariableExpr extends Expr {
         this.v = v;
     }
 
-    public void genC() {
-        System.out.print(v.getName());
+    public void genC(PW pw) {
+        pw.out.print(v.getName());
     }
 }

@@ -1,6 +1,9 @@
 package main;
 
+import ast.PW;
 import ast.Program;
+
+import java.io.PrintWriter;
 
 public class Main {
     public static void main( String []args ) {
@@ -9,6 +12,11 @@ public class Main {
         Compiler compiler = new Compiler();
 
         Program program = compiler.compile(input);
-        program.genC();
+
+        PrintWriter printWriter = new PrintWriter(System.out, true);
+        PW pw = new PW();
+        pw.set(printWriter);
+
+        program.genC(pw);
     }
 }

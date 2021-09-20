@@ -10,8 +10,8 @@ public class StatList {
         this.v = v;
     }
 
-    public void genC() {
+    public void genC(PW pw) {
         for(Stat s : v)
-            s.genC();
+            s.genC(pw);
     }
 }

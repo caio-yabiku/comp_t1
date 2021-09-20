@@ -1,7 +1,7 @@
 package ast;
 
 public class Stat {
-    public void genC() {
+    public void genC(PW pw) {
 
     }
 }

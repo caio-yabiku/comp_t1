@@ -9,8 +9,9 @@ public class PrintlnStat extends Stat {
     }
 
     @Override
-    public void genC() {
-        expr.genC();
-        System.out.println(";");
+    public void genC(PW pw) {
+        pw.print("");
+        expr.genC(pw);
+        pw.out.println(";");
     }
 }

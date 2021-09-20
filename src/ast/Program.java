@@ -11,18 +11,21 @@ public class Program {
         this.statList = statList;
     }
 
-    public void genC() {
-        System.out.println("#include <stdio.h>");
-        System.out.println();
-        System.out.println("void main() {");
+    public void genC(PW pw) {
+        pw.out.println("#include <stdio.h>");
+        pw.out.println();
+        pw.println("void main() {");
 
+        pw.add();
         for(Variable v: arrayVariable) {
-            System.out.println("var Int " + v.getName() + ";");
+            pw.println("var Int " + v.getName() + ";");
         }
 
-        statList.genC();
+        statList.genC(pw);
 
-        System.out.println("}");
+        pw.sub();
+
+        pw.out.println("}");
 
     }
 }
