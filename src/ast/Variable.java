@@ -11,4 +11,12 @@ public class Variable {
     public String getName() {
         return this.name;
     }
+
+    public void setValue(int value) {
+        this.value = value;
+    }
+
+    public void genC(PW pw) {
+
+    }
 }

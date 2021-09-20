@@ -23,6 +23,7 @@ public class Compiler {
         keywordsTable.put( "if", Symbol.IF );
         keywordsTable.put( "else", Symbol.ELSE );
         keywordsTable.put( "for", Symbol.FOR );
+        keywordsTable.put( "in", Symbol.IN );
         keywordsTable.put( "while", Symbol.WHILE );
         keywordsTable.put( "print", Symbol.PRINT );
         keywordsTable.put( "println", Symbol.PRINTLN );
@@ -45,10 +46,7 @@ public class Compiler {
     private Program program() {
         ArrayList<Variable> arrayVariable = null;
 
-        if(token == Symbol.VAR) {
-            nextToken();
-            arrayVariable = varDecList();
-        }
+        arrayVariable = varDecList();
         StatList sl = statList();
 
         Program program = new Program(arrayVariable, sl);
@@ -78,9 +76,11 @@ public class Compiler {
                 token == Symbol.PRINTLN ||
                 token == Symbol.WHILE) {
             v.add(stat());
+            /*
             if(token != Symbol.SEMICOLON)
                 error("; expected");
-            nextToken();
+             */
+            //nextToken();
         }
 
         return new StatList(v);
@@ -117,7 +117,17 @@ public class Compiler {
         nextToken();
 
         Expr e = expr();
+
+        if(token != Symbol.LEFTBRA)
+            error("{ expected");
+
+        nextToken();
         StatList statList = statList();
+
+        if(token != Symbol.RIGHTBRA)
+            error("} expected");
+
+        nextToken();
 
         return new WhileStat(e, statList);
     }
@@ -130,6 +140,11 @@ public class Compiler {
 
         Expr e = expr();
 
+        if(token != Symbol.SEMICOLON)
+            error("; expected");
+
+        nextToken();
+
         return new PrintlnStat(e);
     }
 
@@ -140,6 +155,11 @@ public class Compiler {
         nextToken();
         
         Expr e = expr();
+
+        if(token != Symbol.SEMICOLON)
+            error("; expected");
+
+        nextToken();
         
         return new PrintStat(e);
     }
@@ -156,6 +176,7 @@ public class Compiler {
         if(v != null)
             error("variable was already declared");
         v = new Variable(name);
+        symbolTable.put(name, v);
 
         nextToken();
         if(token != Symbol.IN)
@@ -170,7 +191,18 @@ public class Compiler {
         nextToken();
         Expr endExpr = expr();
 
+        if(token != Symbol.LEFTBRA)
+            error("{ expected");
+
+        nextToken();
         StatList statList = statList();
+
+        if(token != Symbol.RIGHTBRA)
+            error("} expected");
+
+        nextToken();
+
+        symbolTable.remove(v);
 
         return new ForStat(v, startExpr, endExpr, statList);
     }
@@ -183,13 +215,30 @@ public class Compiler {
         nextToken();
 
         Expr e = expr();
-        
+
+        if(token != Symbol.LEFTBRA)
+            error("{ expected");
+
+        nextToken();
         StatList thenPart = statList();
+
+        if(token != Symbol.RIGHTBRA)
+            error("} expected");
+        nextToken();
+
         StatList elsePart = null;
         
         if(token == Symbol.ELSE) {
             nextToken();
+            if(token != Symbol.LEFTBRA)
+                error("{ expected");
+
+            nextToken();
             elsePart = statList();
+
+            if(token != Symbol.RIGHTBRA)
+                error("} expected");
+            nextToken();
         }
         
         return new IfStat(e, thenPart, elsePart);
@@ -212,10 +261,10 @@ public class Compiler {
 
         Expr e = expr();
 
-        /*
         if(token != Symbol.SEMICOLON)
-            error("; expected");            
-         */
+            error("; expected");
+
+        nextToken();
 
         return new AssignStat(v, e);
     }
@@ -337,14 +386,15 @@ public class Compiler {
     private Expr number() {
         int value = numberValue;
         nextToken();
+
         return new NumberExpr(value);
     }
 
     private ArrayList<Variable> varDecList() {
         ArrayList<Variable> varList = new ArrayList<Variable>();
 
-        do {
-            //nextToken();
+        while(token == Symbol.VAR) {
+            nextToken();
             if(token != Symbol.INTEGER)
                 error("Incorrect type");
 
@@ -365,7 +415,7 @@ public class Compiler {
                 error("; expected");
 
             nextToken();
-        } while(token == Symbol.VAR);
+        }
 
         return varList;
     }
@@ -384,7 +434,7 @@ public class Compiler {
             token = Symbol.EOF;
         else {
             // Keywords e Identificadores
-            if(Character.isLetter(ch)) {
+            if(Character.isLetter(input[tokenPos])) {
                 StringBuffer ident = new StringBuffer();
                 while(Character.isLetter(input[tokenPos]) || Character.isDigit(input[tokenPos])) {
                     ident.append(input[tokenPos]);
@@ -398,10 +448,10 @@ public class Compiler {
                     token = value;
             }
             // Numeros
-            else if(Character.isDigit(ch)) {
+            else if(Character.isDigit(input[tokenPos])) {
                 StringBuffer number = new StringBuffer();
                 while(Character.isDigit(input[tokenPos])) {
-                    number.append(ch);
+                    number.append(input[tokenPos]);
                     tokenPos++;
                 }
                 token = Symbol.NUMBER;
@@ -461,11 +511,33 @@ public class Compiler {
                         else
                             token = Symbol.NOT;
                         break;
+                    case '|':
+                        if ( input[tokenPos] == '|' ) {
+                            tokenPos++;
+                            token = Symbol.OR;
+                        }
+                        else
+                            error("Invalid Character: '" + ch + "'");
+                        break;
+                    case '&':
+                        if ( input[tokenPos] == '&' ) {
+                            tokenPos++;
+                            token = Symbol.AND;
+                        }
+                        else
+                            error("Invalid Character: '" + ch + "'");
+                        break;
                     case '(' :
                         token = Symbol.LEFTPAR;
                         break;
                     case ')' :
                         token = Symbol.RIGHTPAR;
+                        break;
+                    case '{' :
+                        token = Symbol.LEFTBRA;
+                        break;
+                    case '}' :
+                        token = Symbol.RIGHTBRA;
                         break;
                     case ';' :
                         token = Symbol.SEMICOLON;

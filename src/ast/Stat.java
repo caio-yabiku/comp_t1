@@ -1,7 +1,5 @@
 package ast;
 
-public class Stat {
-    public void genC(PW pw) {
-
-    }
+abstract public class Stat {
+    abstract public void genC(PW pw);
 }

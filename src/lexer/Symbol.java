@@ -17,6 +17,8 @@ public enum Symbol {
     ASSIGN("="),
     LEFTPAR("("),
     RIGHTPAR(")"),
+    LEFTBRA("{"),
+    RIGHTBRA("}"),
     SEMICOLON(";"),
     VAR("var"),
     IF("if"),

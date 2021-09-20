@@ -1,6 +1,9 @@
 package ast;
 
-public class Expr {
-    public void genC(PW pw) {
-    }
+import java.util.Map;
+
+abstract public class Expr {
+    abstract public void genC(PW pw);
+
+    public void eval() {}
 }

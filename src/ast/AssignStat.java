@@ -1,5 +1,7 @@
 package ast;
 
+import java.util.Map;
+
 public class AssignStat extends Stat {
     private Variable v;
     private Expr expr;
@@ -15,5 +17,9 @@ public class AssignStat extends Stat {
         pw.print(v.getName() + " = ");
         expr.genC(pw);
         pw.out.println(";");
+    }
+
+    //@Override
+    public void eval() {
     }
 }

@@ -7,7 +7,7 @@ import java.io.PrintWriter;
 
 public class Main {
     public static void main( String []args ) {
-        char []input = "var Int s; s = 0; println s; s = s + 1; print s;".toCharArray();
+        char []input = "var Int s; var Int i; s = 0; for j in 1..100 { s = s + j; } println s; if ((s || 1) + ! 5) { s = s + 23; print i; } else { s = 0; } while (i < 5) { i = i + 1; for k in 1..50 { s = s + k; } }".toCharArray();
 
         Compiler compiler = new Compiler();
 

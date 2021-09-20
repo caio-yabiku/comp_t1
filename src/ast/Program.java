@@ -18,7 +18,7 @@ public class Program {
 
         pw.add();
         for(Variable v: arrayVariable) {
-            pw.println("var Int " + v.getName() + ";");
+            pw.println("int " + v.getName() + ";");
         }
 
         statList.genC(pw);
@@ -27,5 +27,11 @@ public class Program {
 
         pw.out.println("}");
 
+    }
+
+    public int run() {
+
+
+        return 0;
     }
 }
