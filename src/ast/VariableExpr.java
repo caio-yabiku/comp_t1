@@ -15,7 +15,7 @@ public class VariableExpr extends Expr {
     }
 
     @Override
-    public void eval() {
-
+    public int eval() {
+        return v.getValue();
     }
 }

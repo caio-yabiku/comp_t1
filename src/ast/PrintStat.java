@@ -13,4 +13,9 @@ public class PrintStat extends Stat {
         expr.genC(pw);
         pw.out.println(");");
     }
+
+    @Override
+    public void eval() {
+        System.out.print(expr.eval());
+    }
 }

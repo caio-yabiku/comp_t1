@@ -319,10 +319,12 @@ public class Compiler {
         Expr left, right;
         left = multExpr();
         Symbol op = token;
-        if(op == Symbol.PLUS || op == Symbol.MINUS) {
+        while(op == Symbol.PLUS || op == Symbol.MINUS) {
             nextToken();
             right = multExpr();
             left = new CompositeExpr(left, op, right);
+
+            op = token;
         }
         return left;
     }
@@ -334,10 +336,12 @@ public class Compiler {
         Expr left, right;
         left = simpleExpr();
         Symbol op = token;
-        if(op == Symbol.MULT || op == Symbol.DIV || op == Symbol.REMAINDER) {
+        while(op == Symbol.MULT || op == Symbol.DIV || op == Symbol.REMAINDER) {
             nextToken();
             right = simpleExpr();
             left = new CompositeExpr(left, op, right);
+
+            op = token;
         }
         return left;
     }
@@ -361,15 +365,15 @@ public class Compiler {
                 return e;
             case NOT:
                 nextToken();
-                e = simpleExpr();
+                e = expr();
                 return new UnaryExpr(e, Symbol.NOT);
             case PLUS:
                 nextToken();
-                e = simpleExpr();
+                e = expr();
                 return new UnaryExpr(e, Symbol.PLUS);
             case MINUS:
                 nextToken();
-                e = simpleExpr();
+                e = expr();
                 return new UnaryExpr(e, Symbol.MINUS);
             default:
                 if(token != Symbol.IDENT)

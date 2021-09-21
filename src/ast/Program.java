@@ -30,7 +30,7 @@ public class Program {
     }
 
     public int run() {
-
+        statList.eval();
 
         return 0;
     }

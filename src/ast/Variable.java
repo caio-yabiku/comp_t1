@@ -6,10 +6,15 @@ public class Variable {
 
     public Variable(String name) {
         this.name = name;
+        this.value = 0;
     }
 
     public String getName() {
         return this.name;
+    }
+
+    public int getValue() {
+        return this.value;
     }
 
     public void setValue(int value) {
@@ -17,6 +22,5 @@ public class Variable {
     }
 
     public void genC(PW pw) {
-
     }
 }

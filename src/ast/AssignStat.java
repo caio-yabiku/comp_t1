@@ -19,7 +19,8 @@ public class AssignStat extends Stat {
         pw.out.println(";");
     }
 
-    //@Override
+    @Override
     public void eval() {
+        v.setValue(expr.eval());
     }
 }

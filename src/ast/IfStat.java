@@ -33,4 +33,14 @@ public class IfStat extends Stat {
             pw.println("}");
         }
     }
+
+    @Override
+    public void eval() {
+        int val = expr.eval();
+
+        if(val != 0)
+            thenPart.eval();
+        else if(elsePart != null)
+            elsePart.eval();
+    }
 }

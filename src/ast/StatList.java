@@ -14,4 +14,9 @@ public class StatList {
         for(Stat s : v)
             s.genC(pw);
     }
+
+    public void eval() {
+        for(Stat s : v)
+            s.eval();
+    }
 }

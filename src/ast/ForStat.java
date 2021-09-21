@@ -7,7 +7,6 @@ public class ForStat extends Stat {
     private StatList statList;
 
     public ForStat(Variable v, Expr startExpr, Expr endExpr, StatList statList) {
-        super();
         this.v = v;
         this.startExpr = startExpr;
         this.endExpr = endExpr;
@@ -27,5 +26,20 @@ public class ForStat extends Stat {
         pw.sub();
 
         pw.println("}");
+    }
+
+    @Override
+    public void eval() {
+        int startVal = startExpr.eval();
+        int endVal = endExpr.eval();
+
+        if(startVal > endVal)
+            throw new RuntimeException("end expression should be >= than start expression");
+
+        v.setValue(startVal);
+        while(v.getValue() <= endVal) {
+            statList.eval();
+            v.setValue(v.getValue() + 1);
+        }
     }
 }

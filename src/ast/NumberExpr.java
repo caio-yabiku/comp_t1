@@ -4,7 +4,6 @@ public class NumberExpr extends Expr {
     private int value;
 
     public NumberExpr(int value) {
-        super();
         this.value = value;
     }
 
@@ -15,5 +14,10 @@ public class NumberExpr extends Expr {
     @Override
     public void genC(PW pw) {
         pw.out.print(value);
+    }
+
+    @Override
+    public int eval() {
+        return this.value;
     }
 }

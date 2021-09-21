@@ -4,7 +4,6 @@ public class PrintlnStat extends Stat {
     private Expr expr;
 
     public PrintlnStat(Expr e) {
-        super();
         this.expr = e;
     }
 
@@ -13,5 +12,10 @@ public class PrintlnStat extends Stat {
         pw.print("printf(\"%d\\n\", ");
         expr.genC(pw);
         pw.out.println(");");
+    }
+
+    @Override
+    public void eval() {
+        System.out.println(expr.eval());
     }
 }

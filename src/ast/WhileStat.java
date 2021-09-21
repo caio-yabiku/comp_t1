@@ -23,4 +23,15 @@ public class WhileStat extends Stat {
 
         pw.println("}");
     }
+
+    @Override
+    public void eval() {
+        int val = expr.eval();
+
+        while(val != 0) {
+            statList.eval();
+
+            val = expr.eval();
+        }
+    }
 }
