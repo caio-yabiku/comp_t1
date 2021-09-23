@@ -2,6 +2,7 @@ package main;
 
 import ast.PW;
 import ast.Program;
+import main.Compiler;
 
 import java.io.*;
 
@@ -13,14 +14,15 @@ public class Main {
         int numChRead;
         Program program;
 
-        if (args.length != 2) {
-            System.out.println("Usage:\n   Main input output");
+        if (args.length != 3) {
+            System.out.println("Usage:\n   Main (flag -gen or -run) input output");
+            System.out.println("First flag tells the program if it must generate C code (-gen) or interpret it (-run)");
             System.out.println("input is the file to be compiled");
             System.out.println("output is the file where the generated code will be stored");
         } else {
-            file = new File(args[0]);
+            file = new File(args[1]);
             if (!file.exists() || !file.canRead()) {
-                System.out.println("Either the file " + args[0] + " does not exist or it cannot be read");
+                System.out.println("Either the file " + args[1] + " does not exist or it cannot be read");
                 throw new RuntimeException();
             }
             try {
@@ -36,7 +38,7 @@ public class Main {
             try {
                 numChRead = stream.read(input, 0, (int) file.length());
             } catch (IOException e) {
-                System.out.println("Error reading file " + args[0]);
+                System.out.println("Error reading file " + args[1]);
                 throw new RuntimeException();
             }
 
@@ -47,7 +49,7 @@ public class Main {
             try {
                 stream.close();
             } catch (IOException e) {
-                System.out.println("Error in handling the file " + args[0]);
+                System.out.println("Error in handling the file " + args[1]);
                 throw new RuntimeException();
             }
 
@@ -55,9 +57,9 @@ public class Main {
             Compiler compiler = new Compiler();
             FileOutputStream outputStream;
             try {
-                outputStream = new FileOutputStream(args[1]);
+                outputStream = new FileOutputStream(args[2]);
             } catch (IOException e) {
-                System.out.println("File " + args[1] + " could not be opened for writing");
+                System.out.println("File " + args[2] + " could not be opened for writing");
                 throw new RuntimeException();
             }
             PrintWriter printWriter = new PrintWriter(outputStream);
@@ -71,8 +73,13 @@ public class Main {
             if (program != null) {
                 PW pw = new PW();
                 pw.set(printWriter);
-                program.genC(pw);
-                program.run();
+                if (args[0].equals("-gen")) {
+                	program.genC(pw);
+                } else if (args[0].equals("-run")){
+                	program.run();
+                } else {
+                	System.out.println("Invalid flag (must pass -gen or -run as first argument)");
+                }
                 if (printWriter.checkError()) {
                     System.out.println("There was an error in the output");
                 }
