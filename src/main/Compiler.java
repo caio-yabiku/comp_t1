@@ -3,6 +3,7 @@ package main;
 import ast.*;
 import lexer.Symbol;
 
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Hashtable;
 
@@ -35,8 +36,9 @@ public class Compiler {
         keywordsTable.put( "!", Symbol.NOT );
     }
 
-    public Program compile(char []p_input) {
+    public Program compile(char []p_input, PrintWriter pw) {
         input = p_input;
+        input[input.length - 1] = '\0';
         tokenPos = 0;
         symbolTable = new Hashtable<String, Variable>();
         nextToken();
@@ -430,8 +432,8 @@ public class Compiler {
             token = Symbol.EOF;
             return;
         }
-
-        while((ch = input[tokenPos]) == ' ') {
+        while (  (ch = input[tokenPos]) == ' ' || ch == '\r' ||
+                ch == '\t' || ch == '\n')  {
             tokenPos++;
         }
         if(ch == '\0')
