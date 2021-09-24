@@ -22,5 +22,6 @@ public class Variable {
     }
 
     public void genC(PW pw) {
+        pw.println("int " + this.name + ";");
     }
 }

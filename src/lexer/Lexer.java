@@ -7,7 +7,7 @@ import java.util.Hashtable;
 public class Lexer {
     public Symbol token;
 
-    private int  tokenPos;
+    private int tokenPos;
     private int lastTokenPos;
     private int lineNumber;
 
@@ -188,6 +188,14 @@ public class Lexer {
         return lineNumber;
     }
 
+    public String getStringValue() {
+        return stringValue;
+    }
+
+    public int getNumberValue() {
+        return numberValue;
+    }
+
     public String getCurrentLine() {
         int i = lastTokenPos;
         if ( i == 0 )
@@ -208,13 +216,5 @@ public class Lexer {
             i++;
         }
         return line.toString();
-    }
-
-    public String getStringValue() {
-        return stringValue;
-    }
-
-    public int getNumberValue() {
-        return numberValue;
     }
 }

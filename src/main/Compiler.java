@@ -59,12 +59,7 @@ public class Compiler {
         return new StatList(v);
     }
 
-    /*
-        Stat ::= AssignStat | IfStat | ForStat | PrintStat |
-                PrintlnStat | WhileStat
-     */
     private Stat stat() {
-
         switch(lexer.token) {
             case IDENT:
                 return assignmentStat();
@@ -400,19 +395,4 @@ public class Compiler {
 
         return varList;
     }
-
-    /*
-    private void error.signal(String msg) {
-        if ( lexer.tokenPos == 0 )
-            lexer.tokenPos = 1;
-        else
-        if ( lexer.tokenPos >= input.length )
-            lexer.tokenPos = input.length;
-
-        String strInput = new String( input, lexer.tokenPos - 1, input.length - lexer.tokenPos + 1 );
-        String strError = "Error at \"" + strInput + "\"";
-        System.out.print( strError );
-        // throws an exception: terminate the program
-        throw new RuntimeException(strError);
-    }*/
 }
