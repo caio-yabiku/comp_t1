@@ -1,6 +1,8 @@
 package main;
 
 import ast.*;
+import errorHandling.CompilerError;
+import lexer.Lexer;
 import lexer.Symbol;
 
 import java.io.PrintWriter;
@@ -8,92 +10,62 @@ import java.util.ArrayList;
 import java.util.Hashtable;
 
 public class Compiler {
-    private Symbol token;
-    private int  tokenPos;
-    private char []input;
     private Hashtable<String, Variable> symbolTable;
-
-    static private Hashtable<String, Symbol> keywordsTable;
-
-    private String stringValue;
-    private int numberValue;
-
-    static {
-        keywordsTable = new Hashtable<String, Symbol>();
-        keywordsTable.put( "var", Symbol.VAR );
-        keywordsTable.put( "if", Symbol.IF );
-        keywordsTable.put( "else", Symbol.ELSE );
-        keywordsTable.put( "for", Symbol.FOR );
-        keywordsTable.put( "in", Symbol.IN );
-        keywordsTable.put( "while", Symbol.WHILE );
-        keywordsTable.put( "print", Symbol.PRINT );
-        keywordsTable.put( "println", Symbol.PRINTLN );
-        keywordsTable.put( "Int", Symbol.INTEGER );
-        keywordsTable.put( "true", Symbol.TRUE );
-        keywordsTable.put( "false", Symbol.FALSE );
-        keywordsTable.put( "&&", Symbol.AND );
-        keywordsTable.put( "||", Symbol.OR );
-        keywordsTable.put( "!", Symbol.NOT );
-    }
+    private CompilerError error;
+    private Lexer lexer;
 
     public Program compile(char []p_input, PrintWriter pw) {
-        input = p_input;
-        input[input.length - 1] = '\0';
-        tokenPos = 0;
         symbolTable = new Hashtable<String, Variable>();
-        nextToken();
+        error = new CompilerError(pw);
+        lexer = new Lexer(p_input, error);
+        error.setLexer(lexer);
+        
+        lexer.nextToken();
         return program();
     }
 
+    /*
+        Program ::= VarList { Stat }
+     */
     private Program program() {
-        ArrayList<Variable> arrayVariable = null;
-
-        arrayVariable = varDecList();
+        ArrayList<Variable> arrayVariable = varDecList();
         StatList sl = statList();
 
         Program program = new Program(arrayVariable, sl);
 
-        /*
-        if(token != Symbol.EOF)
-            error("EOF expected");
-         */
+
+        if(lexer.token != Symbol.EOF)
+            error.signal("EOF expected");
 
         return program;
-
-        /*
-        if(token == Symbol.IDENT || token == Symbol.IF || token == Symbol.FOR|| token == Symbol.PRINT || token == Symbol.PRINTLN || token == Symbol.WHILE) {
-            nextToken();
-            arrayStat = statList();
-        }*/
-
     }
 
+    /*
+        Stat ::= AssignStat | IfStat | ForStat | PrintStat |
+                PrintlnStat | WhileStat
+     */
     private StatList statList() {
         ArrayList<Stat> v = new ArrayList<Stat>();
 
-        while(  token == Symbol.IDENT ||
-                token == Symbol.IF ||
-                token == Symbol.FOR||
-                token == Symbol.PRINT ||
-                token == Symbol.PRINTLN ||
-                token == Symbol.WHILE) {
+        while(  lexer.token == Symbol.IDENT ||
+                lexer.token == Symbol.IF ||
+                lexer.token == Symbol.FOR||
+                lexer.token == Symbol.PRINT ||
+                lexer.token == Symbol.PRINTLN ||
+                lexer.token == Symbol.WHILE) {
             v.add(stat());
-            /*
-            if(token != Symbol.SEMICOLON)
-                error("; expected");
-             */
-            //nextToken();
         }
 
         return new StatList(v);
     }
 
+    /*
+        Stat ::= AssignStat | IfStat | ForStat | PrintStat |
+                PrintlnStat | WhileStat
+     */
     private Stat stat() {
-        /*
-            Stat ::= AssignStat | IfStat | ForStat | PrintStat |
-                    PrintlnStat | WhileStat
-         */
-        switch(token) {
+
+        switch(lexer.token) {
             case IDENT:
                 return assignmentStat();
             case IF:
@@ -107,472 +79,340 @@ public class Compiler {
             case WHILE:
                 return whileStat();
             default:
-                error("Stat expected");
+                error.signal("Stat expected");
         }
         return null;
     }
 
+    /*
+        WhileStat ::= "while" Expr StatList
+     */
     private Stat whileStat() {
-        /*
-            WhileStat ::= "while" Expr StatList
-         */
-        nextToken();
+        lexer.nextToken();
 
         Expr e = expr();
 
-        if(token != Symbol.LEFTBRA)
-            error("{ expected");
+        if(lexer.token != Symbol.LEFTBRA)
+            error.signal("{ expected");
 
-        nextToken();
+        lexer.nextToken();
         StatList statList = statList();
 
-        if(token != Symbol.RIGHTBRA)
-            error("} expected");
+        if(lexer.token != Symbol.RIGHTBRA)
+            error.signal("} expected");
 
-        nextToken();
+        lexer.nextToken();
 
         return new WhileStat(e, statList);
     }
 
+    /*
+        PrintlnStat ::= "println" Expr ";"
+     */
     private Stat printlnStat() {
-        /*
-            PrintlnStat ::= "println" Expr ";"
-         */
-        nextToken();
+        lexer.nextToken();
 
         Expr e = expr();
 
-        if(token != Symbol.SEMICOLON)
-            error("; expected");
+        if(lexer.token != Symbol.SEMICOLON)
+            error.signal("; expected");
 
-        nextToken();
+        lexer.nextToken();
 
         return new PrintlnStat(e);
     }
 
+    /*
+        PrintStat ::= "print" Expr ";"
+     */
     private Stat printStat() {
-        /*
-            PrintStat ::= "print" Expr ";"
-         */
-        nextToken();
+        lexer.nextToken();
         
         Expr e = expr();
 
-        if(token != Symbol.SEMICOLON)
-            error("; expected");
+        if(lexer.token != Symbol.SEMICOLON)
+            error.signal("; expected");
 
-        nextToken();
+        lexer.nextToken();
         
         return new PrintStat(e);
     }
 
+    /*
+        ForStat ::= "for" Id "in" Expr ".." Expr StatList
+     */
     private Stat forStat() {
-        /*
-            ForStat ::= "for" Id "in" Expr ".." Expr StatList
-         */
-        nextToken();
-        if(token != Symbol.IDENT)
-            error("Ident expected");
-        String name = stringValue;
+        lexer.nextToken();
+        if(lexer.token != Symbol.IDENT)
+            error.signal("Ident expected");
+        String name = lexer.getStringValue();
         Variable v = symbolTable.get(name);
         if(v != null)
-            error("variable was already declared");
+            error.signal("variable was already declared");
         v = new Variable(name);
         symbolTable.put(name, v);
 
-        nextToken();
-        if(token != Symbol.IN)
-            error("in expected");
+        lexer.nextToken();
+        if(lexer.token != Symbol.IN)
+            error.signal("in expected");
 
-        nextToken();
+        lexer.nextToken();
         Expr startExpr = expr();
 
-        if(token != Symbol.DOTS)
-            error(".. expected");
+        if(lexer.token != Symbol.DOTS)
+            error.signal(".. expected");
 
-        nextToken();
+        lexer.nextToken();
         Expr endExpr = expr();
 
-        if(token != Symbol.LEFTBRA)
-            error("{ expected");
+        if(lexer.token != Symbol.LEFTBRA)
+            error.signal("{ expected");
 
-        nextToken();
+        lexer.nextToken();
         StatList statList = statList();
 
-        if(token != Symbol.RIGHTBRA)
-            error("} expected");
+        if(lexer.token != Symbol.RIGHTBRA)
+            error.signal("} expected");
 
-        nextToken();
+        lexer.nextToken();
 
         symbolTable.remove(v);
 
         return new ForStat(v, startExpr, endExpr, statList);
     }
 
+    /*
+        IfStat ::= "if" Expr StatList [
+                    "else" StatList ]
+     */
     private Stat ifStat() {
-        /*
-            IfStat ::= "if" Expr StatList [
-                        "else" StatList ]
-         */
-        nextToken();
+        lexer.nextToken();
 
         Expr e = expr();
 
-        if(token != Symbol.LEFTBRA)
-            error("{ expected");
+        if(lexer.token != Symbol.LEFTBRA)
+            error.signal("{ expected");
 
-        nextToken();
+        lexer.nextToken();
         StatList thenPart = statList();
 
-        if(token != Symbol.RIGHTBRA)
-            error("} expected");
-        nextToken();
+        if(lexer.token != Symbol.RIGHTBRA)
+            error.signal("} expected");
+        lexer.nextToken();
 
         StatList elsePart = null;
         
-        if(token == Symbol.ELSE) {
-            nextToken();
-            if(token != Symbol.LEFTBRA)
-                error("{ expected");
+        if(lexer.token == Symbol.ELSE) {
+            lexer.nextToken();
+            if(lexer.token != Symbol.LEFTBRA)
+                error.signal("{ expected");
 
-            nextToken();
+            lexer.nextToken();
             elsePart = statList();
 
-            if(token != Symbol.RIGHTBRA)
-                error("} expected");
-            nextToken();
+            if(lexer.token != Symbol.RIGHTBRA)
+                error.signal("} expected");
+            lexer.nextToken();
         }
         
         return new IfStat(e, thenPart, elsePart);
     }
 
+    /*
+        AssignStat ::= Ident "=" Expr ";
+     */
     private Stat assignmentStat() {
-        /*
-            AssignStat ::= Ident "=" Expr ";
-         */
-        String name = stringValue;
+        String name = lexer.getStringValue();
 
         Variable v = symbolTable.get(name);
         if(v == null)
-            error("Variable " + name + " was not declared");
-        nextToken();
+            error.signal("Variable " + name + " was not declared");
+        lexer.nextToken();
 
-        if(token != Symbol.ASSIGN)
-            error("= expected");
-        nextToken();
+        if(lexer.token != Symbol.ASSIGN)
+            error.signal("= expected");
+        lexer.nextToken();
 
         Expr e = expr();
 
-        if(token != Symbol.SEMICOLON)
-            error("; expected");
+        if(lexer.token != Symbol.SEMICOLON)
+            error.signal("; expected");
 
-        nextToken();
+        lexer.nextToken();
 
         return new AssignStat(v, e);
     }
 
+    /*
+        Expr ::= AndExpr [ "||" AndExpr ]
+    */
     private Expr expr() {
-        /*
-            Expr ::= AndExpr [ "||" AndExpr ]
-        */
         Expr left, right;
         left = andExpr();
-        if(token == Symbol.OR) {
-            nextToken();
+        if(lexer.token == Symbol.OR) {
+            lexer.nextToken();
             right = andExpr();
             left = new CompositeExpr(left, Symbol.OR, right);
         }
         return left;
     }
 
+    /*
+        AndExpr ::= RelExpr [ "&&" RelExpr ]
+     */
     private Expr andExpr() {
-        /*
-            AndExpr ::= RelExpr [ "&&" RelExpr ]
-         */
         Expr left, right;
         left = relExpr();
-        if(token == Symbol.AND) {
-            nextToken();
+        if(lexer.token == Symbol.AND) {
+            lexer.nextToken();
             right = relExpr();
             left = new CompositeExpr(left, Symbol.AND, right);
         }
         return left;
     }
 
+    /*
+         RelExpr ::= AddExpr [ RelOp AddExpr ]
+     */
     private Expr relExpr() {
-        /*
-             RelExpr ::= AddExpr [ RelOp AddExpr ]
-         */
         Expr left, right;
         left = addExpr();
-        Symbol op = token;
+        Symbol op = lexer.token;
         if(op == Symbol.LT || op == Symbol.LE || op == Symbol.GT || op == Symbol.GE || op == Symbol.EQ || op == Symbol.NEQ) {
-            nextToken();
+            lexer.nextToken();
             right = addExpr();
             left = new CompositeExpr(left, op, right);
         }
         return left;
     }
 
+    /*
+        AddExpr ::= MultExpr { AddOp MultExpr }
+     */
     private Expr addExpr() {
-        /*
-            AddExpr ::= MultExpr { AddOp MultExpr }
-         */
         Expr left, right;
         left = multExpr();
-        Symbol op = token;
+        Symbol op = lexer.token;
         while(op == Symbol.PLUS || op == Symbol.MINUS) {
-            nextToken();
+            lexer.nextToken();
             right = multExpr();
             left = new CompositeExpr(left, op, right);
 
-            op = token;
+            op = lexer.token;
         }
         return left;
     }
 
+    /*
+        MultExpr ::= SimpleExpr { MultOp SimpleExpr }
+     */
     private Expr multExpr() {
-        /*
-            MultExpr ::= SimpleExpr { MultOp SimpleExpr }
-         */
         Expr left, right;
         left = simpleExpr();
-        Symbol op = token;
+        Symbol op = lexer.token;
         while(op == Symbol.MULT || op == Symbol.DIV || op == Symbol.REMAINDER) {
-            nextToken();
+            lexer.nextToken();
             right = simpleExpr();
             left = new CompositeExpr(left, op, right);
 
-            op = token;
+            op = lexer.token;
         }
         return left;
     }
 
+    /*
+        SimpleExpr ::= Number | ’(’ Expr ’)’ | "!" SimpleExpr
+                        | AddOp SimpleExpr
+     */
     private Expr simpleExpr() {
-        /*
-            SimpleExpr ::= Number | ’(’ Expr ’)’ | "!" SimpleExpr
-                            | AddOp SimpleExpr
-         */
         Expr e;
 
-        switch(token) {
+        switch(lexer.token) {
             case NUMBER:
                 return number();
             case LEFTPAR:
-                nextToken();
+                lexer.nextToken();
                 e = expr();
-                if(token != Symbol.RIGHTPAR)
-                    error(") expected");
-                nextToken();
+                if(lexer.token != Symbol.RIGHTPAR)
+                    error.signal(") expected");
+                lexer.nextToken();
                 return e;
             case NOT:
-                nextToken();
+                lexer.nextToken();
                 e = expr();
                 return new UnaryExpr(e, Symbol.NOT);
             case PLUS:
-                nextToken();
+                lexer.nextToken();
                 e = expr();
                 return new UnaryExpr(e, Symbol.PLUS);
             case MINUS:
-                nextToken();
+                lexer.nextToken();
                 e = expr();
                 return new UnaryExpr(e, Symbol.MINUS);
             default:
-                if(token != Symbol.IDENT)
-                    error("Identifier expected");
-                nextToken();
-                String name = stringValue;
+                if(lexer.token != Symbol.IDENT)
+                    error.signal("Identifier expected");
+                lexer.nextToken();
+                String name = lexer.getStringValue();
                 Variable v = symbolTable.get(name);
                 if(v == null)
-                    error("Variable " + name + " was not declared");
+                    error.signal("Variable " + name + " was not declared");
                 return new VariableExpr(v);
         }
     }
 
     private Expr number() {
-        int value = numberValue;
-        nextToken();
+        int value = lexer.getNumberValue();
+        lexer.nextToken();
 
         return new NumberExpr(value);
     }
 
+    /*
+        VarList ::= { "var" Int Ident ";" }
+     */
     private ArrayList<Variable> varDecList() {
         ArrayList<Variable> varList = new ArrayList<Variable>();
 
-        while(token == Symbol.VAR) {
-            nextToken();
-            if(token != Symbol.INTEGER)
-                error("Incorrect type");
+        while(lexer.token == Symbol.VAR) {
+            lexer.nextToken();
+            if(lexer.token != Symbol.INTEGER)
+                error.signal("Incorrect type");
 
-            nextToken();
-            if(token != Symbol.IDENT)
-                error("Identifier expected");
-            String name = stringValue;
+            lexer.nextToken();
+            if(lexer.token != Symbol.IDENT)
+                error.signal("Identifier expected");
+            String name = lexer.getStringValue();
             if(symbolTable.get(name) != null)
-                error("Variable " + name + "has already been declared");
+                error.signal("Variable " + name + "has already been declared");
             Variable v = new Variable(name);
 
             // insere na tabela de simbolos e no array de variaveis
             symbolTable.put(name, v);
             varList.add(v);
 
-            nextToken();
-            if(token != Symbol.SEMICOLON)
-                error("; expected");
+            lexer.nextToken();
+            if(lexer.token != Symbol.SEMICOLON)
+                error.signal("; expected");
 
-            nextToken();
+            lexer.nextToken();
         }
 
         return varList;
     }
 
-    private void nextToken() {
-        char ch;
-        if(tokenPos == input.length) {
-            token = Symbol.EOF;
-            return;
-        }
-        while (  (ch = input[tokenPos]) == ' ' || ch == '\r' ||
-                ch == '\t' || ch == '\n')  {
-            tokenPos++;
-        }
-        if(ch == '\0')
-            token = Symbol.EOF;
-        else {
-            // Keywords e Identificadores
-            if(Character.isLetter(input[tokenPos])) {
-                StringBuffer ident = new StringBuffer();
-                while(Character.isLetter(input[tokenPos]) || Character.isDigit(input[tokenPos])) {
-                    ident.append(input[tokenPos]);
-                    tokenPos++;
-                }
-                stringValue = ident.toString();
-                Symbol value = keywordsTable.get(stringValue);
-                if(value == null)
-                    token = Symbol.IDENT;
-                else
-                    token = value;
-            }
-            // Numeros
-            else if(Character.isDigit(input[tokenPos])) {
-                StringBuffer number = new StringBuffer();
-                while(Character.isDigit(input[tokenPos])) {
-                    number.append(input[tokenPos]);
-                    tokenPos++;
-                }
-                token = Symbol.NUMBER;
-                try {
-                    numberValue = Integer.parseInt(number.toString());
-                } catch (NumberFormatException e) {
-                    error("number expected");
-                }
-            }
-            else {
-                tokenPos++;
-                switch(ch) {
-                    case '+' :
-                        token = Symbol.PLUS;
-                        break;
-                    case '-' :
-                        token = Symbol.MINUS;
-                        break;
-                    case '*' :
-                        token = Symbol.MULT;
-                        break;
-                    case '/' :
-                        token = Symbol.DIV;
-                        break;
-                    case '%' :
-                        token = Symbol.REMAINDER;
-                        break;
-                    case '<' :
-                        if ( input[tokenPos] == '=' ) {
-                            tokenPos++;
-                            token = Symbol.LE;
-                        }
-                        else
-                            token = Symbol.LT;
-                        break;
-                    case '>' :
-                        if ( input[tokenPos] == '=' ) {
-                            tokenPos++;
-                            token = Symbol.GE;
-                        }
-                        else
-                            token = Symbol.GT;
-                        break;
-                    case '=' :
-                        if ( input[tokenPos] == '=' ) {
-                            tokenPos++;
-                            token = Symbol.EQ;
-                        }
-                        else
-                            token = Symbol.ASSIGN;
-                        break;
-                    case '!':
-                        if ( input[tokenPos] == '=' ) {
-                            tokenPos++;
-                            token = Symbol.NEQ;
-                        }
-                        else
-                            token = Symbol.NOT;
-                        break;
-                    case '|':
-                        if ( input[tokenPos] == '|' ) {
-                            tokenPos++;
-                            token = Symbol.OR;
-                        }
-                        else
-                            error("Invalid Character: '" + ch + "'");
-                        break;
-                    case '&':
-                        if ( input[tokenPos] == '&' ) {
-                            tokenPos++;
-                            token = Symbol.AND;
-                        }
-                        else
-                            error("Invalid Character: '" + ch + "'");
-                        break;
-                    case '(' :
-                        token = Symbol.LEFTPAR;
-                        break;
-                    case ')' :
-                        token = Symbol.RIGHTPAR;
-                        break;
-                    case '{' :
-                        token = Symbol.LEFTBRA;
-                        break;
-                    case '}' :
-                        token = Symbol.RIGHTBRA;
-                        break;
-                    case ';' :
-                        token = Symbol.SEMICOLON;
-                        break;
-                    case '.':
-                        if ( input[tokenPos] == '.' ) {
-                            tokenPos++;
-                            token = Symbol.DOTS;
-                            break;
-                        }
-                    default:
-                        error("Invalid Character: '" + ch + "'");
-                        break;
-                }
-            }
-        }
-    }
-
-    private void error(String msg) {
-        if ( tokenPos == 0 )
-            tokenPos = 1;
+    /*
+    private void error.signal(String msg) {
+        if ( lexer.tokenPos == 0 )
+            lexer.tokenPos = 1;
         else
-        if ( tokenPos >= input.length )
-            tokenPos = input.length;
+        if ( lexer.tokenPos >= input.length )
+            lexer.tokenPos = input.length;
 
-        String strInput = new String( input, tokenPos - 1, input.length - tokenPos + 1 );
+        String strInput = new String( input, lexer.tokenPos - 1, input.length - lexer.tokenPos + 1 );
         String strError = "Error at \"" + strInput + "\"";
         System.out.print( strError );
         // throws an exception: terminate the program
         throw new RuntimeException(strError);
-    }
+    }*/
 }

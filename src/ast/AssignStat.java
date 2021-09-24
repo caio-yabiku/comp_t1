@@ -1,7 +1,5 @@
 package ast;
 
-import java.util.Map;
-
 public class AssignStat extends Stat {
     private Variable v;
     private Expr expr;

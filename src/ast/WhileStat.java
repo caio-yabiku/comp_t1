@@ -1,7 +1,5 @@
 package ast;
 
-import lexer.Symbol;
-
 public class WhileStat extends Stat {
     private Expr expr;
     private StatList statList;

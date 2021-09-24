@@ -26,7 +26,6 @@ public class Program {
         pw.sub();
 
         pw.out.println("}");
-
     }
 
     public int run() {
