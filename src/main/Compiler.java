@@ -1,7 +1,6 @@
 package main;
 
 import ast.*;
-import errorHandling.CompilerError;
 import lexer.Lexer;
 import lexer.Symbol;
 

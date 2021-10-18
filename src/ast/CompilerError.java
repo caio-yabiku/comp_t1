@@ -1,4 +1,4 @@
-package errorHandling;
+package ast;
 
 import lexer.Lexer;
 

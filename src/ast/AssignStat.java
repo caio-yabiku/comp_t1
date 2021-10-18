@@ -5,7 +5,6 @@ public class AssignStat extends Stat {
     private Expr expr;
 
     public AssignStat(Variable v, Expr e) {
-        super();
         this.v = v;
         this.expr = e;
     }

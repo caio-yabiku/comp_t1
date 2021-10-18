@@ -1,6 +1,6 @@
 package lexer;
 
-import errorHandling.CompilerError;
+import ast.CompilerError;
 
 import java.util.Hashtable;
 

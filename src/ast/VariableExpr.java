@@ -1,7 +1,5 @@
 package ast;
 
-import java.util.Map;
-
 public class VariableExpr extends Expr {
     private Variable v;
 

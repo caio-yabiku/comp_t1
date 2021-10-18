@@ -7,10 +7,6 @@ public class NumberExpr extends Expr {
         this.value = value;
     }
 
-    public int getValue() {
-        return value;
-    }
-
     @Override
     public void genC(PW pw) {
         pw.out.print(value);
